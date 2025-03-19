@@ -356,10 +356,10 @@ geos:
         threads_per_worker: 5
         memory_limit: 40GB
     featurize_train:
-      n_chunks: 10
+      n_chunks: 4
       n_workers: 8
-      memory_limit: 150GB
-      threads_per_worker: 1
+      memory_limit: 100GB
+      threads_per_worker: 2
     build_predict:
       n_chunks: 3
       n_workers: 80
@@ -368,12 +368,12 @@ geos:
     calc_spatial_autocorr:
       n_workers: 3
       n_workers_variogram: 20  # For WGS84 coords only
-      n_chunks: 16 # x direction only
+      n_chunks: 14 # x direction only
     skcv_splits:
       n_workers: 50
       threads_per_worker: 1
     aoa:
-      device_ids: [0, 1, 2, 3]
+      device_ids: [0, 2, 3]
       predict_sample: 0.5
       splot:
         chunked_dist: false
@@ -865,7 +865,7 @@ train:
   cv_splits:
     range_stat: "median"
     n_splits: 5
-    n_sims: 100
+    n_sims: 200
     dir: skcv_splits
   weights:
     fn: feature_weights.parquet
@@ -889,10 +889,10 @@ autogluon:
   save_bag_folds: true
   refit_full: false
   set_best_to_refit_full: false
-  cv_fit_time_limit: 3600
+  cv_fit_time_limit: 7200
   full_fit_time_limit: 12600 # 3.5 hours per trait
   num_gpus: 2
-  num_cpus: 110
+  num_cpus: 120
   feature_importance: true
   FI_time_limit: 1800
   FI_num_shuffle_sets: 10
