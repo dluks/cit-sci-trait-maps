@@ -3,10 +3,10 @@
 import gc
 import multiprocessing
 import os
-from pathlib import Path
 import shutil
 import subprocess
 import tempfile
+from pathlib import Path
 from typing import Any, Optional
 
 import geopandas as gpd
@@ -497,6 +497,7 @@ def pack_data(
                 np.isnan(data), nodata_value, np.round((data - offset) / scale)
             ).astype(dtype)
     except FloatingPointError as e:
+        # In this case, just log a bunch of stats for easier debugging
         log.error("FloatingPointError: %s", e)
         log.error("data_min: %s", data_min)
         log.error("data_max: %s", data_max)
@@ -561,20 +562,21 @@ def pack_xr(
     if isinstance(data, xr.DataArray):
         if isinstance(cast_only, list):
             raise ValueError("cast_only must be a boolean value for DataArray.")
-        scale, offset, nodata_value, packed_data = pack_data(data.values, nbits, signed, cast_only)
+        scale, offset, nodata_value, packed_data = pack_data(
+            data.values, nbits, signed, cast_only
+        )
         data.values = packed_data
         data.attrs["scale_factor"] = scale
         data.attrs["add_offset"] = offset
         data = data.rio.write_nodata(nodata_value, encoded=False)
         return data
-    
+
     # Dataset
     def set_cast_only(cast_only: list[int] | bool, i: int) -> bool:
         if isinstance(cast_only, bool):
             return cast_only
-        if isinstance(cast_only, list) and i in cast_only:
-            return True
-        return False
+        return isinstance(cast_only, list) and i in cast_only
+
     for i, var in enumerate(data.data_vars):
         cast = set_cast_only(cast_only, i)
         scale, offset, nodata_value, packed_data = pack_data(
