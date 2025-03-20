@@ -122,7 +122,7 @@ def calculate_variogram_pykrige(
 def copy_ref_to_dvc(cfg: ConfigBox) -> None:
     """Copy the reference ranges file to the DVC-tracked location."""
     fn = (
-        f"{Path(cfg.train.spatial_autocorr).stem }_"
+        f"{Path(cfg.train.spatial_autocorr).stem}_"
         f"{cfg.calc_spatial_autocorr.use_existing}"
         f"{Path(cfg.train.spatial_autocorr).suffix}"
     )
@@ -296,7 +296,7 @@ def main(cfg: ConfigBox = get_config()) -> None:
             (
                 y_ddf[["x", "y", trait_col]]
                 .astype(np.float32)
-                .dropna(subset=[trait_col])
+                .dropna()
                 .reset_index(drop=True)
             ),
             trait_col,
