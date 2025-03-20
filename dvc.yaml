@@ -143,7 +143,7 @@ stages:
       - ${train.dir}/${PFT}/${model_res}/${train.Y.fn}
 
   calculate_spatial_autocorr:
-    cmd: python src/features/calc_spatial_autocorr.py
+    cmd: python src/features/calc_spatial_autocorr_gpu.py
     deps:
       - src/features/calc_spatial_autocorr.py
       - ${train.dir}/${PFT}/${model_res}/${train.Y.fn}
