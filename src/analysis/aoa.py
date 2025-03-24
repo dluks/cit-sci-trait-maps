@@ -441,7 +441,7 @@ def main(args: argparse.Namespace = cli(), cfg: ConfigBox = get_config()) -> Non
 
     for d in aoa_dirs:
         trait = d.name
-        for ts in ["splot_gbif", "splot"]:
+        for ts in cfg.train.trait_sets:
             ts_aoa_fn = d / ts / f"{trait}_{ts}_aoa.tif"
             ts_aoa_fn.parent.mkdir(parents=True, exist_ok=True)
 
