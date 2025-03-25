@@ -1,11 +1,12 @@
-md5: b4105fcff6f78bf0982b8ad4717c2260
+md5: 9d3b1ea8f5c70e54a6b7a55a7baa710b
 frozen: true
 deps:
-- path: data/landcover/esa_worldcover_v100_1km
-  repo:
-    url: https://github.com/GeoSense-Freiburg/panops-data-registry
-    rev_lock: ac7118ccc38730b4309c8805f776e4cd61f275b6
-    remote: gcs
+- path: 
+    ssh://geos/mnt/gsdata/projects/panops/panops-data-registry/data/landcover/esa_worldcover_v100_1km
+  md5: 3cc4d8f50aa3b1441f8843cf46381e42.dir
+  size: 40502767
+  nfiles: 1
+  hash: md5
 outs:
 - hash: md5
   path: esa_worldcover_v100_1km
