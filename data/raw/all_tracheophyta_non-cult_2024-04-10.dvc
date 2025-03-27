@@ -1,14 +1,12 @@
-md5: 1f810d5f60382fb7f0ab0062da61cdb5
+md5: 661f98b1f652d31cbdb894ee82957478
 frozen: true
 deps:
-- path: data/gbif/all_tracheophyta_non-cult_2024-04-10
-  repo:
-    url: https://github.com/GeoSense-Freiburg/panops-data-registry
-    rev_lock: ac7118ccc38730b4309c8805f776e4cd61f275b6
-    remote: gcs
-outs:
-- hash: md5
-  path: all_tracheophyta_non-cult_2024-04-10
+- path: 
+    ssh://geos/mnt/gsdata/projects/panops/panops-data-registry/data/gbif/all_tracheophyta_non-cult_2024-04-10
   md5: ada860692d425bd047bd09fd4531fdbf.dir
   size: 30005038638
   nfiles: 1584
+  hash: md5
+outs:
+- hash: md5
+  path: all_tracheophyta_non-cult_2024-04-10
