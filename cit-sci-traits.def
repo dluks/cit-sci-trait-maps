@@ -34,6 +34,7 @@ From: python:3.11-slim
     mkdir /app/data
     mkdir /app/models
     mkdir /app/src
+    mkdir /app/tests
     
     cd /app
 
@@ -43,6 +44,7 @@ From: python:3.11-slim
 %environment
     export PYTHONUNBUFFERED=1
     export PYTHONPATH=/app:$PYTHONPATH
+    export PROJECT_ROOT=/app
 
 %runscript
     #!/bin/bash
