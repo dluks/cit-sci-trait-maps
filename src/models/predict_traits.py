@@ -226,14 +226,14 @@ def predict_traits_ag(
                 os.environ["OPENBLAS_NUM_THREADS"] = num_cpus
                 os.environ["LOKY_MAX_CPU_COUNT"] = num_cpus
 
-                client, cluster = init_dask(
+                client, _ = init_dask(
                     dashboard_address=get_config().dask_dashboard,
                     n_workers=predict_cfg.n_workers,
                     threads_per_worker=1,
                 )
 
                 pred, tmp_dir = predict_dask(predict_data, trait_set_dir, cov)
-                close_dask(client, cluster)
+                close_dask(client)
             else:
                 log.info("Predicting traits for %s...", trait_set_dir)
                 if isinstance(predict_data, dd.DataFrame):
