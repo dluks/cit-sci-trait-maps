@@ -76,6 +76,7 @@ def power_back_transform(data: np.ndarray, trait_num: str) -> np.ndarray:
         data_bt = xfer.inverse_transform(
             pd.DataFrame(columns=xfer.feature_names_in_)
             .assign(**{f"X{trait_num}": data})
+            .infer_objects(copy=False)
             .fillna(0)
         )[:, ft_id]
 
