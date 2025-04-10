@@ -9,9 +9,15 @@ ERROR_PATH="logs/%x_%j.err"
 TIME="01:00:00"
 NODES=1
 NTASKS=1
+NTASKS_PER_NODE=""  # New parameter for tasks per node
 CPUS=1
-MEM="4G"
+MEM="500M"
 PARTITION="cpu"
+CONSTRAINT=""       # New parameter for node constraints
+QOS=""              # New parameter for quality of service
+ACCOUNT=""          # New parameter for account
+MAIL_TYPE="BEGIN,END,FAIL"        # Email notification types
+MAIL_USER="daniel.lusk@geosense.uni-freiburg.de"        # Email address for notifications
 COMMAND=""
 
 # Parse named arguments
@@ -41,7 +47,11 @@ while [ $# -gt 0 ]; do
       NTASKS="${1#*=}"
       shift
       ;;
-    --cpus=*)
+    --ntasks-per-node=*)
+      NTASKS_PER_NODE="${1#*=}"
+      shift
+      ;;
+    --cpus=*|--cpus-per-task=*)
       CPUS="${1#*=}"
       shift
       ;;
@@ -51,6 +61,26 @@ while [ $# -gt 0 ]; do
       ;;
     --partition=*)
       PARTITION="${1#*=}"
+      shift
+      ;;
+    --constraint=*)
+      CONSTRAINT="${1#*=}"
+      shift
+      ;;
+    --qos=*)
+      QOS="${1#*=}"
+      shift
+      ;;
+    --account=*)
+      ACCOUNT="${1#*=}"
+      shift
+      ;;
+    --mail-type=*)
+      MAIL_TYPE="${1#*=}"
+      shift
+      ;;
+    --mail-user=*)
+      MAIL_USER="${1#*=}"
       shift
       ;;
     --command=*)
@@ -73,8 +103,25 @@ done
 # Validate command
 if [ -z "$COMMAND" ]; then
   echo "Error: No command specified"
-  echo "Usage: $0 --job-name=<name> --output=<path> --error=<path> --time=<time> --nodes=<n> --ntasks=<n> --cpus=<n> --mem=<mem> --partition=<part> --command=<cmd>"
-  echo "Or: $0 [named_params] <command>"
+  echo "Usage: $0 [options] <command>"
+  echo "Options:"
+  echo "  --job-name=<name>           Job name (default: dvc_job)"
+  echo "  --output=<path>             Output file path (default: logs/%x_%j.log)"
+  echo "  --error=<path>              Error file path (default: logs/%x_%j.err)"
+  echo "  --time=<time>               Maximum runtime (default: 01:00:00)"
+  echo "  --nodes=<n>                 Number of nodes (default: 1)"
+  echo "  --ntasks=<n>                Total number of tasks (default: 1)"
+  echo "  --ntasks-per-node=<n>       Tasks per node (optional)"
+  echo "  --cpus=<n>                  CPUs per task (default: 1)"
+  echo "  --cpus-per-task=<n>         Alias for --cpus"
+  echo "  --mem=<mem>                 Memory per node (default: 500M)"
+  echo "  --partition=<part>          Partition/queue (default: cpu)"
+  echo "  --constraint=<features>     Node features/constraints (optional)"
+  echo "  --qos=<qos>                 Quality of service (optional)"
+  echo "  --account=<account>         Account to charge (optional)"
+  echo "  --mail-type=<type>          When to send email: BEGIN,END,FAIL,ALL (optional)"
+  echo "  --mail-user=<email>         Email address for notifications (optional)"
+  echo "  --command=<cmd>             Command to run (optional, can be last argument)"
   exit 1
 fi
 
@@ -94,9 +141,46 @@ cat > "$temp_script" << EOF
 #SBATCH --time=$TIME
 #SBATCH --nodes=$NODES
 #SBATCH --ntasks=$NTASKS
-#SBATCH --cpus-per-task=$CPUS
-#SBATCH --mem=$MEM
-#SBATCH --partition=$PARTITION
+EOF
+
+# Add optional parameters if specified
+[ -n "$NTASKS_PER_NODE" ] && echo "#SBATCH --ntasks-per-node=$NTASKS_PER_NODE" >> "$temp_script"
+echo "#SBATCH --cpus-per-task=$CPUS" >> "$temp_script"
+echo "#SBATCH --mem=$MEM" >> "$temp_script"
+echo "#SBATCH --partition=$PARTITION" >> "$temp_script"
+[ -n "$CONSTRAINT" ] && echo "#SBATCH --constraint=$CONSTRAINT" >> "$temp_script"
+[ -n "$QOS" ] && echo "#SBATCH --qos=$QOS" >> "$temp_script"
+[ -n "$ACCOUNT" ] && echo "#SBATCH --account=$ACCOUNT" >> "$temp_script"
+[ -n "$MAIL_TYPE" ] && echo "#SBATCH --mail-type=$MAIL_TYPE" >> "$temp_script"
+[ -n "$MAIL_USER" ] && echo "#SBATCH --mail-user=$MAIL_USER" >> "$temp_script"
+
+# Add job start notification
+cat >> "$temp_script" << 'EOF'
+
+# Notify when job starts execution (resources allocated)
+job_start_notification() {
+    job_id=$SLURM_JOB_ID
+    hostname=$(hostname)
+    start_time=$(date)
+    echo "Job $job_id has started on $hostname at $start_time" > "$SLURM_SUBMIT_DIR/job_${job_id}_start.txt"
+    
+    # Print allocation info to log
+    echo "====== JOB RESOURCE ALLOCATION ======" 
+    echo "Job ID: $SLURM_JOB_ID"
+    echo "Allocated nodes: $(scontrol show hostnames | tr '\n' ' ')"
+    echo "Allocated CPUs: $SLURM_CPUS_ON_NODE total, $SLURM_CPUS_PER_TASK per task"
+    echo "Tasks: $SLURM_NTASKS total, $SLURM_NTASKS_PER_NODE per node"
+    echo "Start time: $start_time"
+    echo "======================================"
+}
+
+# Call the notification function
+job_start_notification
+
+EOF
+
+# Add the command
+cat >> "$temp_script" << EOF
 
 # Run the command
 $COMMAND
@@ -129,4 +213,7 @@ if [ $job_status -ne 0 ]; then
 fi
 
 echo "Job ${job_id} completed successfully."
+if [ -f "$SLURM_SUBMIT_DIR/job_${job_id}_start.txt" ]; then
+    echo "Job start notification can be found in: job_${job_id}_start.txt"
+fi
 exit 0 
