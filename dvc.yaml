@@ -34,14 +34,10 @@ stages:
       ${container.name}
       ${container.docker_tag}
       ${container.image}
-      src/data/build_try_traits.py
+      poetry run python src/data/build_try_traits.py
     deps:
       - src/data/build_try_traits.py
-      - src/utils/df_utils.py
-      - src/utils/trait_utils.py
-      - ${container.image}
       - ${raw_dir}/${trydb.raw.dir}/${trydb.raw.zip}
-      - stages/get_TRY_mean_traits.sh
     params:
       - trydb
       - container
