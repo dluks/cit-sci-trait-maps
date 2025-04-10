@@ -16,14 +16,20 @@ def genus_species_caps(col: pd.Series) -> pd.Series:
     """
     col = col.str.title()
 
-    return col.str.split().map(lambda x: x[0] + " " + x[1].lower())
+    return (
+        col.str.split()
+        .map(lambda x: x[0] + " " + x[1].lower())
+        .astype("string[pyarrow]")
+    )
 
 
 def trim_species_name(col: pd.Series) -> pd.Series:
     """
     Trims the species name in the given column.
     """
-    return col.str.extract("([A-Za-z]+ [A-Za-z]+)", expand=False)
+    return col.str.extract("([A-Za-z]+ [A-Za-z]+)", expand=False).astype(
+        "string[pyarrow]"
+    )
 
 
 def clean_species_name(
@@ -36,11 +42,13 @@ def clean_species_name(
     if new_sp_col is None:
         new_sp_col = sp_col
 
-    return (
-        df.assign(**{new_sp_col: trim_species_name(df[sp_col])})
-        .dropna(subset=[new_sp_col])
-        .assign(**{new_sp_col: lambda _df: genus_species_caps(_df[new_sp_col])})
-    )
+    # Pipeline of operations with conditional meta parameter
+    result = df.assign(
+        **{new_sp_col: trim_species_name(df[sp_col])},
+    ).dropna(subset=[new_sp_col])
+    result[new_sp_col] = result[new_sp_col].str.lower()
+
+    return result
 
 
 def filter_pft(df: pd.DataFrame, pft_set: str, pft_col: str = "pft") -> pd.DataFrame:

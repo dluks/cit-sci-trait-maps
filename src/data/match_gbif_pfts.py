@@ -30,34 +30,56 @@ def main(cfg: ConfigBox = get_config()):
         "decimallongitude",
         "occurrencestatus",
     ]
-    ddf = dd.read_parquet(
-        gbif_raw_dir / "all_tracheophyta_non-cult_2024-04-10.parquet/*", columns=columns
+    gbif = dd.read_parquet(
+        gbif_raw_dir / "all_tracheophyta_non-cult_2024-04-10.parquet/*",
+        columns=columns,
+    ).astype(
+        {
+            "species": "string[pyarrow]",
+            "taxonrank": "category",
+            "decimallatitude": "float64[pyarrow]",
+            "decimallongitude": "float64[pyarrow]",
+            "occurrencestatus": "category",
+        }
     )
 
     pft_path = Path(cfg.raw_dir, cfg.trydb.raw.pfts)
+    pft_columns = ["AccSpeciesName", "pft"]
     if pft_path.suffix == ".csv":
-        pfts = dd.read_csv(Path(cfg.raw_dir, cfg.trydb.raw.pfts), encoding="latin-1")
+        pfts = dd.read_csv(Path(cfg.raw_dir, cfg.trydb.raw.pfts), encoding="latin-1")[
+            pft_columns
+        ]
     elif pft_path.suffix == ".parquet":
-        pfts = dd.read_parquet(Path(cfg.raw_dir, cfg.trydb.raw.pfts))
+        pfts = dd.read_parquet(
+            Path(cfg.raw_dir, cfg.trydb.raw.pfts), columns=pft_columns
+        )
     else:
         raise ValueError(f"Unsupported PFT file format: {pft_path.suffix}")
 
+    pfts = pfts.astype(
+        {
+            "AccSpeciesName": "string[pyarrow]",
+            "pft": "category",
+        }
+    )
+
     # 02. Preprocess GBIF data
-    ddf = (
-        ddf.query("taxonrank == 'SPECIES' and occurrencestatus == 'PRESENT'")
+    gbif = (
+        gbif.dropna(subset=["species"])
+        .query("taxonrank == 'SPECIES' and occurrencestatus == 'PRESENT'")
         .drop(columns=["taxonrank", "occurrencestatus"])
-        .dropna(subset=["species"])
         .pipe(clean_species_name, "species", "speciesname")
         .drop(columns=["species"])
+        .sort_values(by="speciesname")
         .set_index("speciesname")
     )
 
     # 03. Preprocess PFT data
     pfts = (
-        pfts.drop(columns=["AccSpeciesID"])
-        .dropna(subset=["AccSpeciesName"])
+        pfts.dropna(subset=["AccSpeciesName"])
         .pipe(clean_species_name, "AccSpeciesName", "speciesname")
         .drop(columns=["AccSpeciesName"])
+        .sort_values(by="speciesname")
         .drop_duplicates(subset=["speciesname"])
         .set_index("speciesname")
     )
@@ -65,8 +87,8 @@ def main(cfg: ConfigBox = get_config()):
     log.info("Matching GBIF and PFT data and saving to disk...")
     # 04. Merge GBIF and PFT data and save to disk
     try:
-        ddf = (
-            ddf.join(pfts, how="inner")
+        gbif = (
+            gbif.join(pfts, how="inner")
             .reset_index()
             .to_parquet(gbif_prep_dir / cfg.gbif.interim.matched, write_index=False)
         )
