@@ -5,6 +5,15 @@ is_slurm_available() {
     command -v sbatch >/dev/null 2>&1
 }
 
+# Function to check if container should be used
+use_container() {
+    [[ "${USE_CONTAINER:-FALSE}" =~ ^(TRUE|true|T|t|1)$ ]]
+}
+
+# Get the command (last argument)
+ARGS=("$@")
+COMMAND="${ARGS[${#ARGS[@]}-1]}"
+
 # Main logic
 if is_slurm_available; then
     echo "Running in Slurm environment..."
@@ -21,6 +30,12 @@ if is_slurm_available; then
         --partition="cpu" \
         "stages/utils/run_in_container.sh $@"
 else
-    echo "Running directly (no Slurm detected)..."
-    stages/utils/run_in_container.sh "$@"
+    if use_container; then
+        echo "Running with container..."
+        stages/utils/run_in_container.sh "$@"
+    else
+        echo "Running directly without container..."
+        # Execute the command directly
+        exec $COMMAND
+    fi
 fi
