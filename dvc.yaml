@@ -68,7 +68,13 @@ stages:
           persist: true
 
   extract_splot:
-    cmd: python src/data/extract_splot.py
+    cmd: >-
+      stages/extract_splot.sh
+      ${container.type}
+      ${container.name}
+      ${container.docker_tag}
+      ${container.image}
+      poetry run python src/data/extract_splot.py
     deps:
       - src/data/extract_splot.py
       - ${raw_dir}/${datasets.Y.splot}
