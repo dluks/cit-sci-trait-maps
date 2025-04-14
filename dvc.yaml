@@ -161,7 +161,8 @@ stages:
           persist: false 
 
   build_splot_maps:
-    cmd: python src/data/build_splot_maps.py
+    cmd: >-
+      stages/build_splot_maps_parallel.sh
     deps:
       - src/data/build_splot_maps.py
       - ${interim_dir}/${splot.interim.dir}/${splot.interim.extracted}
@@ -172,6 +173,7 @@ stages:
       - model_res
       - PFT
       - target_resolution
+      - datasets.Y.traits
     outs:
       - ${interim_dir}/${splot.interim.dir}/${splot.interim.traits}/${PFT}/${model_res}:
           persist: false

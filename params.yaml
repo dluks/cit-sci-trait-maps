@@ -730,6 +730,12 @@ nemo2:
     build_gbif_maps:
       n_workers: 32
       threads_per_worker: 5
+    build_splot_maps:
+      npartitions: 60  
+      dask:
+        n_workers: 40
+        threads_per_worker: 5
+        memory_limit: 40GB
 
 mask:
   path: data/raw/esa_worldcover_v100_1km/esa_worldcover_v100_1km.tif
