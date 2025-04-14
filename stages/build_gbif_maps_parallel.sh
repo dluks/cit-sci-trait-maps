@@ -68,7 +68,7 @@ if is_slurm_available; then
         --time="00:30:00" \
         --nodes=1 \
         --ntasks=1 \
-        --cpus-per-task=16 \
+        --cpus-per-task=32 \
         --threads-per-core=1 \
         --mem="250G" \
         --partition="cpu"
@@ -76,7 +76,7 @@ if is_slurm_available; then
     
     for TRAIT in "${TRAIT_ARRAY[@]}"; do
         # Create job name with trait ID
-        JOB_NAME="build_gbif_map_${TRAIT}"
+        JOB_NAME="gb_${TRAIT}"
         
         echo "Submitting job for trait ${TRAIT}..."
         
