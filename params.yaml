@@ -741,6 +741,11 @@ nemo2:
       n_workers: 8
       memory_limit: 100GB
       threads_per_worker: 2
+    calc_spatial_autocorr:
+      n_workers: 1
+      n_workers_variogram: 20  # For WGS84 coords only
+      n_chunks: 16 # x direction only
+      gpu_ids: [0, 1, 2, 3]
 
 mask:
   path: data/raw/esa_worldcover_v100_1km/esa_worldcover_v100_1km.tif
