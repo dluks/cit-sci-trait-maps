@@ -1,5 +1,7 @@
 [core]
     autostage = true
     remote = ufrnas
-[remote "ufrnas"]
+['remote "ufrnas"']
     url = ssh://geos/mnt/gsdata/projects/panops/cit-sci-traits/dvc-cache
+['remote "gcs"']
+    url = gs://cit-sci-traits_dvc
