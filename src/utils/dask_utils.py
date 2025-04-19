@@ -24,28 +24,24 @@ def close_dask(client: Client) -> None:
         client: The Dask client to shut down
         
     Note:
-        This function uses client.shutdown() to ensure a thorough cleanup of the Dask cluster,
-        including all workers and resources. Uses a 30-second timeout for normal shutdown
-        and 60 seconds for force shutdown.
+        This function first attempts to close the client with a timeout.
+        If that fails, it will try a force shutdown. The function will
+        log any failures but will not terminate the process, allowing
+        the rest of the pipeline to continue.
     """
+    if client is None:
+        return
+
     try:
-        if client is not None:
-            try:
-                # Use shutdown() instead of separate close() calls
-                client.shutdown()
-            except TimeoutError:
-                log.warning("Timeout while shutting down Dask client, forcing shutdown with 60s timeout")
-                # Force shutdown with a longer timeout
-                client.shutdown()
-            except Exception as e:
-                log.warning(f"Error shutting down Dask client: {e}")
-                # Try one last time to force shutdown with a longer timeout
-                try:
-                    client.shutdown()
-                except Exception:
-                    pass
-    except Exception as e:
-        log.error(f"Unexpected error during Dask cleanup: {e}")
+        # First attempt: Graceful close with timeout
+        client.close(timeout=30)
+    except (TimeoutError, Exception) as e:
+        log.warning(f"Initial close attempt failed: {e}. Attempting shutdown...")
+        try:
+            # Second attempt: Force shutdown
+            client.shutdown()
+        except Exception as e:
+            log.warning(f"Shutdown failed: {e}. Resources may not be fully cleaned up.")
 
 
 def df_to_dd(
