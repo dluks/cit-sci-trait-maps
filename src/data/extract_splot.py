@@ -78,7 +78,9 @@ def main(cfg: ConfigBox = get_config()) -> None:
     trait_df.to_parquet(splot_prep_dir / "trait.parquet", compression="zstd")
 
     # 06. Clean up
-    extracted_rdata_fp.unlink()
+    if extracted_rdata_fp.exists():
+        log.info("Removing %s...", extracted_rdata_fp)
+        extracted_rdata_fp.unlink()
     log.info("Done.")
 
 
