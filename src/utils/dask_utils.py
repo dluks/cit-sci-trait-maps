@@ -1,11 +1,10 @@
 """Utility functions for Dask. For Dask-CUDA, see src/utils/dask_cuda_utils.py."""
 
-from typing import Any
-
 import dask.dataframe as dd
 import pandas as pd
 from distributed import Client, LocalCluster
 from distributed.utils import TimeoutError
+
 from src.conf.environment import log
 
 
@@ -14,15 +13,18 @@ def init_dask(**kwargs) -> tuple[Client, LocalCluster]:
     cluster = LocalCluster(**kwargs)
 
     client = Client(cluster)
+
+    # Print the Dask dashboard URL
+    log.info("Dask dashboard URL: %s", cluster.dashboard_link)
     return client, cluster
 
 
 def close_dask(client: Client) -> None:
     """Close the Dask client and its associated cluster.
-    
+
     Args:
         client: The Dask client to shut down
-        
+
     Note:
         This function first attempts to close the client with a timeout.
         If that fails, it will try a force shutdown. The function will
@@ -44,10 +46,12 @@ def close_dask(client: Client) -> None:
             log.warning(f"Shutdown failed: {e}. Resources may not be fully cleaned up.")
 
 
-def df_to_dd(
-    df: pd.DataFrame, npartitions: int
-) -> dd.DataFrame:  # pyright: ignore[reportPrivateImportUsage]
+def df_to_dd(df: pd.DataFrame, npartitions: int) -> dd.DataFrame:  # pyright: ignore[reportPrivateImportUsage]
     """Convert a Pandas DataFrame to a Dask DataFrame."""
     return dd.from_pandas(  # pyright: ignore[reportPrivateImportUsage]
         df, npartitions=npartitions
     )
+
+
+def repartition_if_set(df: dd.DataFrame, npartitions: int | None) -> dd.DataFrame:
+    return df.repartition(npartitions=npartitions) if npartitions is not None else df
