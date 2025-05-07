@@ -1,0 +1,2 @@
+tests/test_data/interim/try/traits_PCA4.parquet filter=lfs diff=lfs merge=lfs -text
+tests/test_data/interim/try/traits_TRY6.parquet filter=lfs diff=lfs merge=lfs -text
