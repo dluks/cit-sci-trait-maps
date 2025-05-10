@@ -2,3 +2,5 @@
 /traits.parquet
 /power_transformer.pkl
 /no_transform.pkl
+/norm_scaler.pkl
+/trait_pca.pkl
