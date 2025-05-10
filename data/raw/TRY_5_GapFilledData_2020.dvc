@@ -1,13 +1,13 @@
-md5: a76e5807e7ddb6e75bc47d2c8e2426b5
+md5: 3fadb4f1c50626832a60cd16237f2541
 frozen: true
 deps:
 - path: data/try/TRY_5_GapFilledData_2020
   repo:
     url: https://github.com/GeoSense-Freiburg/panops-data-registry
-    rev_lock: ac7118ccc38730b4309c8805f776e4cd61f275b6
+    rev_lock: aab014f3cd583aa2f211cd2106d7f7820d330cb4
 outs:
-- hash: md5
-  path: TRY_5_GapFilledData_2020
-  md5: 84cc29bf1c2f949ef2c533f08a5f6f90.dir
+- md5: 84cc29bf1c2f949ef2c533f08a5f6f90.dir
   size: 452814652
   nfiles: 1
+  hash: md5
+  path: TRY_5_GapFilledData_2020
