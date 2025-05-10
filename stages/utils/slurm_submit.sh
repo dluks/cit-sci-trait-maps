@@ -206,23 +206,42 @@ actual_error_path=${actual_error_path//%x/$JOB_NAME}
 
 echo "Monitoring job ${job_id}, waiting for completion..."
 
-# Function to check if job is still running
+# Function to check if job is running
 job_is_running() {
-    # Add timeout to squeue command to prevent hanging
-    timeout 10 squeue -j ${job_id} --noheader &> /dev/null
-    local status=$?
-    # If timeout or command failed, retry once more before giving up
-    if [ $status -ne 0 ]; then
-        sleep 2
-        timeout 10 squeue -j ${job_id} --noheader &> /dev/null
-        status=$?
-        # If still failing after retry, check with sacct
-        if [ $status -ne 0 ]; then
-            timeout 10 sacct -j ${job_id} --format=State --noheader | grep -q "RUNNING\|PENDING"
-            status=$?
-        fi
+    # First check with squeue - fast and accurate for running jobs
+    if timeout 5 squeue -j ${job_id} --noheader &> /dev/null; then
+        return 0  # Job is definitely running if in squeue
     fi
-    return $status
+    
+    # If not in squeue, check with sacct to confirm completion
+    local job_state=$(timeout 5 sacct -j ${job_id} --format=State --noheader | head -1 | tr -d '[:space:]')
+    
+    # Check if job is in a running or pending state
+    case "$job_state" in
+        RUNNING|PENDING|REQUEUED|RESIZING|CONFIGURING)
+            return 0  # Job is still active
+            ;;
+        ""|COMPLETING)
+            # If no state or COMPLETING, check again with squeue to be sure
+            sleep 1
+            if timeout 5 squeue -j ${job_id} --noheader &> /dev/null; then
+                return 0  # Job is running
+            fi
+            # If still not found, check the job state once more before giving up
+            job_state=$(timeout 5 sacct -j ${job_id} --format=State --noheader | head -1 | tr -d '[:space:]')
+            case "$job_state" in
+                RUNNING|PENDING|REQUEUED|RESIZING|CONFIGURING|COMPLETING)
+                    return 0  # Job is still active
+                    ;;
+                *)
+                    return 1  # Job is not running
+                    ;;
+            esac
+            ;;
+        *)
+            return 1  # Job is done
+            ;;
+    esac
 }
 
 # Function to kill any tail processes
@@ -290,13 +309,27 @@ if [ -f "${actual_error_path}" ]; then
         tail -f "${actual_error_path}" &
         tail_pid=$!
         
-        # Check job status every 5 seconds
-        while job_is_running; do
-            sleep 5
+        # Check job status every 10 seconds - set to longer interval to avoid thrashing
+        completion_count=0
+        while true; do
+            if ! job_is_running; then
+                # Count how many consecutive times job appears to be completed
+                completion_count=$((completion_count + 1))
+                
+                # Only exit after 3 consecutive completion checks (30 seconds)
+                if [ $completion_count -ge 3 ]; then
+                    # Job is definitely done
+                    break
+                fi
+            else
+                # Reset counter if job appears to be running again
+                completion_count=0
+            fi
+            sleep 10
         done
         
-        # Job is done - give a few seconds to catch final output
-        sleep 3
+        # Job is done - wait a moment for final output then stop tailing
+        sleep 2
         
         # Kill the tail process
         kill -9 $tail_pid 2>/dev/null || true
@@ -304,19 +337,20 @@ if [ -f "${actual_error_path}" ]; then
     ) &
     tail_monitor_pid=$!
     
-    # Set a maximum wait time (5 minutes) for the tail monitor
-    timeout_seconds=300
+    # Set a longer maximum wait time (20 minutes) for the tail monitor
+    timeout_seconds=1200
     wait_seconds=0
     
-    # Wait for either the job to finish or timeout
-    while [ $wait_seconds -lt $timeout_seconds ] && kill -0 $tail_monitor_pid 2>/dev/null; do
-        if ! job_is_running && [ $wait_seconds -gt 10 ]; then
-            # If job is done and we've waited at least 10 seconds, break the wait
-            sleep 3  # Give a few more seconds for final output
+    # Wait for either the job to finish or timeout, checking occasionally
+    while [ $wait_seconds -lt $timeout_seconds ]; do
+        # Check if tail monitor is still running
+        if ! kill -0 $tail_monitor_pid 2>/dev/null; then
+            # Tail monitor exited, which means job completed
             break
         fi
-        sleep 5
-        wait_seconds=$((wait_seconds + 5))
+        
+        sleep 10
+        wait_seconds=$((wait_seconds + 10))
     done
     
     # If we're still tailing after timeout, force kill it
