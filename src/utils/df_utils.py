@@ -156,9 +156,7 @@ def outlier_mask(
         np.ndarray: A boolean mask indicating whether each value is an outlier or not.
     """
     col_values = col.values
-    lower_bound, upper_bound = np.quantile(  # pyright: ignore[reportCallIssue]
-        col_values, [lower, upper]  # pyright: ignore[reportArgumentType]
-    )
+    lower_bound, upper_bound = np.quantile(col_values, [lower, upper])  # type: ignore
     return (col_values >= lower_bound) & (col_values <= upper_bound)
 
 
