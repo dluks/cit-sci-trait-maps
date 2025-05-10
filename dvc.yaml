@@ -34,7 +34,7 @@ stages:
       ${container.name}
       ${container.docker_tag}
       ${container.image}
-      poetry run python src/data/build_try_traits.py
+      "poetry run python src/data/build_try_traits.py"
     deps:
       - src/data/build_try_traits.py
     params:
@@ -56,7 +56,7 @@ stages:
       ${container.name}
       ${container.docker_tag}
       ${container.image}
-      poetry run python src/data/match_gbif_pfts.py
+      "poetry run python src/data/match_gbif_pfts.py"
     deps:
       - src/data/match_gbif_pfts.py
       - ${raw_dir}/${gbif.raw.dir}
@@ -78,7 +78,7 @@ stages:
       ${container.name}
       ${container.docker_tag}
       ${container.image}
-      poetry run python src/data/extract_splot.py
+      "poetry run python src/data/extract_splot.py"
     deps:
       - src/data/extract_splot.py
       - ${raw_dir}/${datasets.Y.splot}
@@ -186,7 +186,7 @@ stages:
       ${container.name}
       ${container.docker_tag}
       ${container.image}
-      poetry run src/features/build_y.py
+      "poetry run python src/features/build_y.py"
     deps:
       - src/features/build_y.py
       - ${interim_dir}/${gbif.interim.dir}/${gbif.interim.traits}/${PFT}/${model_res}
