@@ -41,7 +41,7 @@ def cli() -> argparse.Namespace:
     parser.add_argument(
         "-t",
         "--trait",
-        type=str,
+        type=int,
         help="Trait ID to process (e.g. '3'). If not provided, all traits will be processed.",
     )
     parser.add_argument(
@@ -139,10 +139,7 @@ def main(args: argparse.Namespace = cli(), cfg: ConfigBox = get_config()) -> Non
             )
 
         else:
-            # Standard trait statistics approach
-            cols = [f"X{trait}" for trait in traits_to_process]
-
-            for col in cols:
+            for col in traits_to_process:
                 out_fn = out_dir / f"{col}.tif"
                 if out_fn.exists() and args.resume:
                     log.info("%s.tif already exists. Skipping...", col)
@@ -151,7 +148,7 @@ def main(args: argparse.Namespace = cli(), cfg: ConfigBox = get_config()) -> Non
                 log.info("Processing trait %s...", col)
                 raster = rasterize_points(
                     gbif_traits[["x", "y", col]],
-                    data_col=str(col),
+                    data_cols=str(col),
                     res=cfg.target_resolution,
                     crs=cfg.crs,
                     agg=True,

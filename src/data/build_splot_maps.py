@@ -42,7 +42,7 @@ def cli() -> argparse.Namespace:
     parser.add_argument(
         "-t",
         "--trait",
-        type=str,
+        type=int,
         help="Trait ID to process (e.g. '3'). If not provided, all traits will be processed.",
     )
     parser.add_argument(
@@ -79,10 +79,11 @@ def main(args: argparse.Namespace = cli(), cfg: ConfigBox = get_config()) -> Non
     if args.fd_metric and not fd_mode:
         raise ValueError("FD metric not supported when not in FD mode.")
 
+    fd_stats_to_process = []
     if args.fd_metric:
         fd_stats_to_process = [args.fd_metric]
-    else:
-        fd_stats_to_process = fd_metrics
+    elif fd_mode:
+        fd_stats_to_process = trait_stats
 
     traits_to_process = get_traits_to_process(
         cfg.datasets.Y.traits, using_pca, args.trait
@@ -411,7 +412,7 @@ def _generate_trait_maps(
 
             ds = rasterize_points(
                 df,
-                data_col=stat_col,
+                data_cols=stat_col,
                 res=cfg.target_resolution,
                 crs=cfg.crs,
                 agg=True,
