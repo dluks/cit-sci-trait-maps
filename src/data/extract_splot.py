@@ -20,6 +20,49 @@ def main(cfg: ConfigBox = get_config()) -> None:
         Path(cfg.interim_dir, cfg.splot.interim.dir) / cfg.splot.interim.extracted
     )
     splot_prep_dir.mkdir(parents=True, exist_ok=True)
+    if cfg.splot_open:
+        log.info("Extracting sPlot Open data...")
+        extract_splot_open(splot_raw_dir, splot_prep_dir)
+    else:
+        log.info("Extracting sPlot Full data...")
+        extract_splot_full(splot_raw_dir, splot_prep_dir)
+
+
+def extract_splot_open(splot_raw_dir: Path, splot_prep_dir: Path) -> None:
+    header_df = pd.read_csv(splot_raw_dir / "sPlotOpen_header(3).txt", sep="\t")
+    vegetation_df = pd.read_csv(
+        splot_raw_dir / "sPlotOpen_DT(2).txt", sep="\t", encoding="utf-8"
+    )
+    trait_df = pd.read_csv(splot_raw_dir / "sPlotOpen_CWM_CWV(2).txt", sep="\t")
+
+    # 04. Optimize DataFrames
+    log.info("Optimizing DataFrames...")
+    for i, df in enumerate([header_df, vegetation_df, trait_df]):
+        for col in df.columns:
+            if df[col].dtype == "object":
+                df[col] = df[col].astype("string[pyarrow]")
+            if col == "Date":
+                df[col] = pd.to_datetime(df[col], format="%Y-%m-%d")
+            if i == 1:
+                cat_cols = [
+                    "PlotObservationID",
+                    "GIVD_ID",
+                    "Dataset",
+                    "Continent",
+                    "Country",
+                    "Biome",
+                ]
+                if col in cat_cols:
+                    df[col] = df[col].astype("category")
+
+    # 05. Save DataFrames to parquet
+    log.info("Saving DataFrames to disk...")
+    header_df.to_parquet(splot_prep_dir / "header.parquet", compression="zstd")
+    vegetation_df.to_parquet(splot_prep_dir / "vegetation.parquet", compression="zstd")
+    trait_df.to_parquet(splot_prep_dir / "trait.parquet", compression="zstd")
+
+
+def extract_splot_full(splot_raw_dir: Path, splot_prep_dir: Path) -> None:
     zip_path = splot_raw_dir / "extracted_data.zip"
     extracted_rdata_fp = splot_prep_dir / "extracted_data.RData"
 

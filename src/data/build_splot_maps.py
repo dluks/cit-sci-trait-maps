@@ -114,7 +114,9 @@ def main(args: argparse.Namespace = cli(), cfg: ConfigBox = get_config()) -> Non
     # create dict of dask kws, but only if they are not None
     dask_kws = {k: v for k, v in sys_cfg.dask.items() if v is not None}
     with Client(dashboard_address=cfg.dask_dashboard, **dask_kws):
-        header = _load_splot_header(cfg.crs, sys_cfg.npartitions, splot_dir)
+        header = _load_splot_header(
+            cfg.crs, sys_cfg.npartitions, splot_dir, cfg.splot_open
+        )
         traits = load_try_traits(sys_cfg.npartitions, traits_to_process)
         pfts = _load_pfts(cfg.PFT)
         vegetation = _load_splot_vegetation(sys_cfg.npartitions, splot_dir)
@@ -168,24 +170,27 @@ def _load_pfts(PFT: str) -> pd.DataFrame:
     return pfts
 
 
-def _load_splot_header(to_crs: str, npartitions: int, splot_dir: Path) -> dd.DataFrame:
+def _load_splot_header(
+    to_crs: str, npartitions: int, splot_dir: Path, splot_open: bool
+) -> dd.DataFrame:
     """Load header and set plot IDs as index for later joining with vegetation data."""
-
     log.info("Loading sPlot header data...")
+    givd_col = "GIVD_ID" if splot_open else "GIVD_NU"
+
     header = (
         dd.read_parquet(
             splot_dir / "header.parquet",
-            columns=["PlotObservationID", "Longitude", "Latitude", "GIVD_NU"],
+            columns=["PlotObservationID", "Longitude", "Latitude", givd_col],
         )
         .astype(
             {
                 "PlotObservationID": "uint32[pyarrow]",
-                "GIVD_NU": "category",
+                givd_col: "category",
             }
         )
         .pipe(repartition_if_set, npartitions)
         .pipe(filter_certain_plots, "00-RU-008")
-        .drop(columns=["GIVD_NU"])
+        .drop(columns=[givd_col])
         .astype({"Longitude": np.float64, "Latitude": np.float64})
         .set_index("PlotObservationID")
         .map_partitions(reproject_geo_to_xy, to_crs=to_crs, x="Longitude", y="Latitude")
@@ -195,25 +200,30 @@ def _load_splot_header(to_crs: str, npartitions: int, splot_dir: Path) -> dd.Dat
     return header
 
 
-def _load_splot_vegetation(npartitions: int, splot_dir: Path) -> dd.DataFrame:
+def _load_splot_vegetation(
+    npartitions: int, splot_dir: Path, splot_open: bool
+) -> dd.DataFrame:
     """Load sPlot vegetation data, clean species names, and set them as index for later
     joining with trait data."""
 
     log.info("Loading sPlot vegetation data...")
+
+    abund_col = "Relative_cover" if splot_open else "Rel_Abund_Plot"
+
     veg = (
         dd.read_parquet(
             splot_dir / "vegetation.parquet",
             columns=[
                 "PlotObservationID",
                 "Species",
-                "Rel_Abund_Plot",
+                abund_col,
             ],
         )
         .astype(
             {
                 "PlotObservationID": "uint32[pyarrow]",
                 "Species": "string[pyarrow]",
-                "Rel_Abund_Plot": "float64[pyarrow]",
+                abund_col: "float64[pyarrow]",
             }
         )
         .pipe(repartition_if_set, npartitions)

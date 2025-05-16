@@ -23,6 +23,7 @@ dask_dashboard: ":39143"
 trait_mapping: "reference/trait_mapping.json"
 trait_stat_mapping: "reference/trait_stat_mapping.json"
 try_version: 6
+splot_open: false
 
 pylos:
   "1km":
