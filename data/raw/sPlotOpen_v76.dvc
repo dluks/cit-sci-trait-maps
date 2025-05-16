@@ -1,0 +1,13 @@
+md5: 6a1195fe21218476ffce70782bbee698
+frozen: true
+deps:
+- path: data/splot/sPlotOpen_v76
+  repo:
+    url: git@github.com:GeoSense-Freiburg/panops-data-registry
+    rev_lock: 59a88306ae48c3cf676e5607439e7335ed8668d5
+outs:
+- md5: c06b62279da8afd1048f42572852ecc6.dir
+  size: 526410695
+  nfiles: 12
+  hash: md5
+  path: sPlotOpen_v76
