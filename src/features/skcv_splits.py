@@ -3,7 +3,7 @@
 import argparse
 import logging
 import warnings
-from typing import Sequence
+from collections.abc import Sequence
 
 import dask.dataframe as dd
 import numpy as np
@@ -20,6 +20,61 @@ from src.utils.dataset_utils import get_autocorr_ranges_fn, get_cv_splits_dir, g
 from src.utils.df_utils import reproject_xy_to_geo
 from src.utils.log_utils import get_loggers_starting_with
 from src.utils.spatial_utils import acr_to_h3_res, assign_hexagons
+
+
+def cli() -> argparse.Namespace:
+    """Parse command-line arguments."""
+    parser = argparse.ArgumentParser(
+        description="Generate spatial k-fold cross-validation splits."
+    )
+    parser.add_argument(
+        "-o", "--overwrite", action="store_true", help="Overwrite existing splits"
+    )
+    parser.add_argument("-d", "--debug", action="store_true", help="Enable debug mode")
+    return parser.parse_args()
+
+
+def main(args: argparse.Namespace = cli(), cfg: ConfigBox = get_config()) -> None:
+    """Main function to generate spatial k-fold cross-validation splits."""
+    syscfg = cfg[detect_system()][cfg.model_res]
+
+    # Ignore warnings
+    warnings.simplefilter(action="ignore", category=UserWarning)
+
+    if args.debug:
+        log.setLevel(logging.DEBUG)
+        syscfg.skcv_splits.n_workers = 40
+
+    log.info("Initializing Dask...")
+    client, _ = init_dask(
+        dashboard_address=cfg.dask_dashboard,
+        n_workers=syscfg.skcv_splits.n_workers,
+        # threads_per_worker=syscfg.skcv_splits.threads_per_worker,
+    )
+    ranges = pd.read_parquet(
+        get_autocorr_ranges_fn(),
+        columns=["trait", cfg.train.cv_splits.range_stat],
+    )
+
+    target_cols: pd.Index = dd.read_parquet(get_y_fn()).columns.difference(["source"])
+    trait_cols: pd.Index = target_cols.difference(["x", "y"])
+
+    traits = dd.read_parquet(get_y_fn(), columns=target_cols).repartition(
+        npartitions=100
+    )
+
+    log.info("Assigning splits for traits...")
+    # compute(
+    #     *[
+    #         _assign_trait_splits(traits, trait_col, ranges, args.overwrite, cfg)
+    #         for trait_col in trait_cols
+    #     ]
+    # )
+    for trait_col in trait_cols:
+        _assign_trait_splits(traits, trait_col, ranges, args.overwrite, cfg)
+
+    close_dask(client)
+    log.info("Done!")
 
 
 def calculate_kg_p_value(
@@ -121,7 +176,7 @@ def assign_folds(
     )
 
     def _compute_best_similarity(
-        assignments: list[tuple[float, pd.Series]]
+        assignments: list[tuple[float, pd.Series]],
     ) -> tuple[pd.Series, float]:
         best_similarity = None
         best_assignment = pd.Series(dtype=int)
@@ -255,65 +310,10 @@ def _assign_trait_splits(
         trait_col,
     )
 
-    trait_df[["x", "y", "fold"]].drop_duplicates(
-        subset=["x", "y"]
-    ).reset_index(drop=True).to_parquet(splits_fn, compression="zstd")
+    trait_df[["x", "y", "fold"]].drop_duplicates(subset=["x", "y"]).reset_index(
+        drop=True
+    ).to_parquet(splits_fn, compression="zstd")
     return None
-
-
-def cli() -> argparse.Namespace:
-    """Parse command-line arguments."""
-    parser = argparse.ArgumentParser(
-        description="Generate spatial k-fold cross-validation splits."
-    )
-    parser.add_argument(
-        "-o", "--overwrite", action="store_true", help="Overwrite existing splits"
-    )
-    parser.add_argument("-d", "--debug", action="store_true", help="Enable debug mode")
-    return parser.parse_args()
-
-
-def main(args: argparse.Namespace = cli(), cfg: ConfigBox = get_config()) -> None:
-    """Main function to generate spatial k-fold cross-validation splits."""
-    syscfg = cfg[detect_system()][cfg.model_res]
-
-    # Ignore warnings
-    warnings.simplefilter(action="ignore", category=UserWarning)
-
-    if args.debug:
-        log.setLevel(logging.DEBUG)
-        syscfg.skcv_splits.n_workers = 40
-
-    log.info("Initializing Dask...")
-    client, _ = init_dask(
-        dashboard_address=cfg.dask_dashboard,
-        n_workers=syscfg.skcv_splits.n_workers,
-        # threads_per_worker=syscfg.skcv_splits.threads_per_worker,
-    )
-    ranges = pd.read_parquet(
-        get_autocorr_ranges_fn(),
-        columns=["trait", cfg.train.cv_splits.range_stat],
-    )
-
-    target_cols: pd.Index = dd.read_parquet(get_y_fn()).columns.difference(["source"])
-    trait_cols: pd.Index = target_cols.difference(["x", "y"])
-
-    traits = dd.read_parquet(get_y_fn(), columns=target_cols).repartition(
-        npartitions=100
-    )
-
-    log.info("Assigning splits for traits...")
-    # compute(
-    #     *[
-    #         _assign_trait_splits(traits, trait_col, ranges, args.overwrite, cfg)
-    #         for trait_col in trait_cols
-    #     ]
-    # )
-    for trait_col in trait_cols:
-        _assign_trait_splits(traits, trait_col, ranges, args.overwrite, cfg)
-
-    close_dask(client)
-    log.info("Done!")
 
 
 if __name__ == "__main__":
