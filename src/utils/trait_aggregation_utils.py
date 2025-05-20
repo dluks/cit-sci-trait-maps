@@ -6,7 +6,7 @@ from scipy.sparse.csgraph import minimum_spanning_tree
 from scipy.spatial import ConvexHull
 from scipy.spatial.distance import pdist, squareform
 
-from src.conf.environment import file_log, log
+from src.conf.environment import log
 
 ########################################################
 ### Community-weighted stats ###
@@ -88,16 +88,12 @@ def fd_metrics(
     if df.empty or len(df) < 2:
         return pd.Series({s: np.nan for s in stats})
 
-    try:
-        group_name = str(df.name)
-    except AttributeError:
-        group_name = "no_group_name"
-
     # Extract trait matrix and normalize abundances
     trait_matrix = df[trait_cols].values
 
     if abundance_col is not None:
-        # Convert abundances to numpy array before normalization to avoid ArrowExtensionArray issues
+        # Convert abundances to numpy array before normalization to avoid
+        # ArrowExtensionArray issues
         df = df.drop(columns=[species_col])  # We no longer need this column
         abundances = df[abundance_col].to_numpy()
 
@@ -205,7 +201,8 @@ def calculate_feve(trait_matrix: np.ndarray, abundances: np.ndarray) -> float:
                 parent_nodes.append(i)
                 child_nodes.append(j)
 
-    # Calculate EW (weighted branch lengths) - divide branch length by the sum of abundances
+    # Calculate EW (weighted branch lengths) - divide branch length by the sum of
+    # abundances
     ew = np.array(branch_lengths) / (abundances[parent_nodes] + abundances[child_nodes])
 
     # Calculate PEW (proportion of each branch in total)
