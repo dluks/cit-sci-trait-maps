@@ -361,6 +361,12 @@ def get_y_fn(config: ConfigBox = cfg) -> Path:
 
 def get_autocorr_ranges_fn(config: ConfigBox = cfg) -> Path:
     """Get the path to the autocorrelation ranges file for a specific configuration."""
+    if config.calc_spatial_autocorr.use_existing:
+        use_res = config.calc_spatial_autocorr.use_existing
+        trait_stat = config.datasets.Y.trait_stats[config.datasets.Y.trait_stat - 1]
+        return Path(
+            f"reference/spatial_autocorr_{config.PFT}_{use_res}_{trait_stat}.parquet"
+        )
     return get_train_dir(config) / config.train.spatial_autocorr
 
 
