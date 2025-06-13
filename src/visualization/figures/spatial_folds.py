@@ -8,7 +8,6 @@ import cartopy.feature as cfeature
 import geopandas as gpd
 import h3
 import matplotlib.pyplot as plt
-import numpy as np
 import pandas as pd
 import seaborn as sns
 from shapely.geometry import Polygon
@@ -193,14 +192,6 @@ def create_spatial_folds_plot(
             crs=crs,
         )
 
-    # Get unique folds and create color palette
-    unique_folds = sorted(points_df["fold"].unique())
-    n_folds = len(unique_folds)
-
-    # Use a modern, visually appealing categorical palette
-    colors = sns.color_palette("Set2", n_folds)
-    fold_colors = dict(zip(unique_folds, colors))
-
     # Plot points as small dots first (behind hexagons)
     points_gdf.plot(
         ax=ax,
@@ -278,7 +269,7 @@ def main():
         print(f"Created {len(hex_gdf)} hexagons")
 
         print("Creating visualization...")
-        fig = create_spatial_folds_plot(
+        _ = create_spatial_folds_plot(
             points_df,
             hex_gdf,
             crs="EPSG:6933",
