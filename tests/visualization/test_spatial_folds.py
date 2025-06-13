@@ -1,10 +1,8 @@
 """Tests for spatial_folds visualization module."""
 
-from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import MagicMock, patch
 
 import geopandas as gpd
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import pytest
@@ -48,9 +46,11 @@ class TestLoadAutocorrData:
             }
         )
 
-        with patch("pandas.read_parquet", return_value=mock_data):
-            with pytest.raises(ValueError, match="Trait 'X50_mean' not found"):
-                load_autocorr_data("X50_mean")
+        with (
+            patch("pandas.read_parquet", return_value=mock_data),
+            pytest.raises(ValueError, match="Trait 'X50_mean' not found"),
+        ):
+            load_autocorr_data("X50_mean")
 
     def test_load_autocorr_data_file_path(self):
         """Test that correct file path is used."""
