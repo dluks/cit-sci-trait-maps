@@ -26,16 +26,20 @@ def set_font(font: str) -> None:
             for font_file in all_fonts:
                 font_path = Path(font_file)
                 if font_path.exists():
-                    # Check for regular font
+                    # Check for regular font (exclude bold, italic, oblique)
                     if (
                         font_name.lower() in font_path.name.lower()
                         and "bold" not in font_path.name.lower()
+                        and "italic" not in font_path.name.lower()
+                        and "oblique" not in font_path.name.lower()
                     ):
                         found_fonts["regular"] = str(font_path)
-                    # Check for bold font
+                    # Check for bold font (exclude italic, oblique)
                     elif (
                         font_name.lower() in font_path.name.lower()
                         and "bold" in font_path.name.lower()
+                        and "italic" not in font_path.name.lower()
+                        and "oblique" not in font_path.name.lower()
                     ):
                         found_fonts["bold"] = str(font_path)
 
@@ -58,7 +62,9 @@ def set_font(font: str) -> None:
         if "bold" in freesans_fonts:
             font_manager.fontManager.addfont(freesans_fonts["bold"])
 
+        # Set font family and default style (but allow weight to be overridden)
         plt.rcParams["font.family"] = "FreeSans"
+        plt.rcParams["font.style"] = "normal"
 
 
 def show_available_fonts() -> None:
