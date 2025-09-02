@@ -1,0 +1,11 @@
+- Code formatted with Black (88 cols) and uses double quotes
+- All functions include full type annotations and appropriate docstrings
+- Tests pass: `pytest -q`
+- Static checks clean: `pyright`, `pylint src tests`
+- DVC stages updated if pipeline behavior changed; `dvc repro` tested
+- Notebooks updated or added to document new functionality; run end‑to‑end
+- README or in‑repo docs adjusted if UX/CLI changed
+- Params in `params.yaml` documented and validated; defaults make sense
+- Container still builds if relevant: `dvc repro build_container`
+- Large data artifacts tracked via DVC, not git
+- Commit descriptive message; link issues/PRs as needed

@@ -1,0 +1,19 @@
+## Code quality
+- Type annotations required for all functions; explicit return types
+- Black formatting, 88‑char lines, double quotes, PEP 8 naming
+- Docstrings: one‑liner <15 lines; full docstrings otherwise (Description, Params, Returns, Raises)
+- Handle errors with meaningful exception types; avoid broad excepts; log appropriately
+
+## Scientific & data practices
+- Validate inputs; maintain data lineage; document transformations
+- Use appropriate numerical precision and note assumptions/limitations
+- Reproducible notebooks: end‑to‑end runnable, well‑documented, include validation/QA
+
+## Architecture & design
+- Favor simple functions; use classes sparingly
+- Prefer strategy pattern for pluggable components (e.g., model backends, IO)
+- Environment compatibility: support CPU/GPU and local/HPC via params/env vars
+
+## Testing & CI hygiene
+- Unit tests in `tests/` with pytest
+- Static types with pyright; style with pylint (ruff optional)
