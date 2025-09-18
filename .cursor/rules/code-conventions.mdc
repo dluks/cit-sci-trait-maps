@@ -1,0 +1,40 @@
+---
+alwaysApply: true
+---
+
+# Python Code Conventions
+
+## Type Annotations
+- Always use type annotations for function parameters and return types
+- Use lowercase type annotations (e.g., `list`, `dict`, `tuple`, `set`) instead of capitalized versions from typing module when possible
+- For Python 3.9+, prefer built-in generic types over typing module equivalents:
+  - Use `list[str]` instead of `List[str]`
+  - Use `dict[str, int]` instead of `Dict[str, int]`
+  - Use `tuple[int, ...]` instead of `Tuple[int, ...]`
+  - Use `set[str]` instead of `Set[str]`
+- Use `typing` module only when necessary (e.g., `Union`, `Optional`, `Protocol`, `TypeVar`)
+- Include type annotations for class attributes and module-level variables when their types are not obvious
+
+## Examples
+
+Good:
+```python
+def process_data(items: list[str], config: dict[str, int]) -> tuple[int, str]:
+    """Process a list of items with configuration."""
+    pass
+
+def find_user(user_id: int) -> dict[str, str] | None:
+    """Find user by ID, return None if not found."""
+    pass
+```
+
+Avoid:
+```python
+from typing import List, Dict, Tuple
+
+def process_data(items: List[str], config: Dict[str, int]) -> Tuple[int, str]:
+    pass
+
+def find_user(user_id):  # Missing type annotations
+    pass
+```
