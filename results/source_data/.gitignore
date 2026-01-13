@@ -1,0 +1,6 @@
+# Large source data files (stored on Zenodo)
+SourceData.xlsx
+SourceData.zip
+cv_obs_vs_pred.parquet
+spatial_folds.parquet
+trait_maps_1km.zip

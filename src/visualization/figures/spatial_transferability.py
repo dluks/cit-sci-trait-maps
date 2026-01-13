@@ -1,3 +1,4 @@
+import argparse
 from collections.abc import Sequence
 from pathlib import Path
 from typing import Any
@@ -57,19 +58,36 @@ def get_traits_of_interest() -> list[str]:
 traits_of_interest = get_traits_of_interest()
 
 
-def main() -> None:
+def cli() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="Plot spatial transferability figure.")
+    parser.add_argument(
+        "-o",
+        "--out_path",
+        type=str,
+        default="./results/figures/spatial-transfer.png",
+        help="Output file path.",
+    )
+    return parser.parse_args()
+
+
+def main(args: argparse.Namespace | None = None) -> None:
+    if args is None:
+        args = cli()
+
     data = load_or_generate_data()
 
     with sns.plotting_context("paper", font_scale=1):
         set_font("FreeSans")
         build_figure(data)
 
-    if SAVE:
-        plt.savefig(
-            "results/figures/spatial-transfer.png", dpi=DPI, bbox_inches="tight"
-        )
-
-    # plt.show()
+    if args.out_path:
+        out_path = Path(args.out_path)
+        save_kwargs: dict[str, Any] = {"bbox_inches": "tight"}
+        # Only add dpi for raster formats
+        if out_path.suffix.lower() in [".png", ".jpg", ".jpeg", ".tiff", ".tif"]:
+            save_kwargs["dpi"] = DPI
+        plt.savefig(out_path, **save_kwargs)
+        log.info(f"Saved figure to {out_path}")
 
 
 def load_or_generate_data():

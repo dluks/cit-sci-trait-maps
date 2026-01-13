@@ -106,3 +106,5 @@ job*.txt
 profile*
 profiling/*
 tmp
+.claude
+cst_shared-dvc-cache

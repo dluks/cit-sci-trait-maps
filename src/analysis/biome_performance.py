@@ -86,7 +86,7 @@ def calc_cov_per_biome() -> None:
         dashboard_address=cfg.dask_dashboard, n_workers=8, threads_per_worker=1
     )
     tasks = [delayed(process_cov)(raster) for raster in all_cov_maps]
-    results = compute(*tasks)
+    results: list[pd.DataFrame] = compute(*tasks)  # pyright: ignore[reportAssignmentType]
     close_dask(client)
     all_cov_means = pd.concat(results)
     all_biome_results_df = create_or_open_all_biome_results()
@@ -179,8 +179,9 @@ def assign_biome_to_points(df: pd.DataFrame) -> pd.DataFrame:
 
 def compute_means_per_discrete_class(discrete_array, continuous_array):
     """
-    Returns a dictionary mapping each discrete value in `discrete_array`
-    to the mean of `continuous_array` values in that class.
+    Returns a DataFrame mapping each discrete value in `discrete_array`
+    to the mean of `continuous_array` values in that class, along with
+    the count of pixels (n) per class.
     """
 
     # Ensure inputs are flattened to 1D
@@ -193,16 +194,6 @@ def compute_means_per_discrete_class(discrete_array, continuous_array):
         .astype({"biome": np.int8})
     )
 
-    # # 1) Drop NaNs from the continuous array
-    # valid_mask = ~np.isnan(values)
-    # labels = labels[valid_mask]
-    # values = values[valid_mask]
-
-    # # 2) Drop NaNs from the discrete array
-    # valid_mask = ~np.isnan(labels)
-    # labels = labels[valid_mask]
-    # values = values[valid_mask]
-
     labels = combined.biome.to_numpy()
     values = combined["cov"].to_numpy()
 
@@ -210,19 +201,20 @@ def compute_means_per_discrete_class(discrete_array, continuous_array):
     sums = np.bincount(labels, weights=values)
     counts = np.bincount(labels)
 
-    # Calculate means, skipping any labels that don't appear
+    # Calculate means and counts, skipping any labels that don't appear
     biomes = []
     means = []
+    ns = []
     unique_labels = np.unique(labels)
     for label in unique_labels:
-        # Avoid division by zero
         biomes.append(label)
+        ns.append(int(counts[label]))
         if counts[label] > 0:
             means.append(sums[label] / counts[label])
         else:
             means.append(np.nan)
 
-    return pd.DataFrame({"biome": biomes, "mean_cov": means})
+    return pd.DataFrame({"biome": biomes, "mean_cov": means, "n": ns})
 
 
 def process_cov(fn: Path) -> pd.DataFrame:
