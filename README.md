@@ -4,7 +4,7 @@
 
 ## Project Overview
 
-<a href="https://doi.org/10.5281/zenodo.18269445"><img src="https://zenodo.org/badge/1135703985.svg" alt="DOI"></a>
+[![DOI](https://zenodo.org/badge/1135703985.svg)](https://doi.org/10.5281/zenodo.18269445)
 
 This project generates global, high-resolution plant trait maps based on crowdsourced biodiversity monitoring and Earth observation. The maps cover 31 plant functional traits as defined in the TRY Plant Trait Database at 1 km resolution with global extent.
 
