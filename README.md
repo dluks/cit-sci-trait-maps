@@ -1,8 +1,11 @@
-# Global plant trait maps based on crowdsourced biodiversity monitoring and Earth observation
+# Global plant trait maps based on crowdsourced biodiversity monitoring and Earth observation 
 
 <img src="./results/figures/exemplar.png" alt="Exemplar global plant trait map showing predicted community-weighted plant height" style="width: 95%; max-width: 700px;" />
 
 ## Project Overview
+
+<a href="https://doi.org/10.5281/zenodo.18269445"><img src="https://zenodo.org/badge/1135703985.svg" alt="DOI"></a>
+
 This project generates global, high-resolution plant trait maps based on crowdsourced biodiversity monitoring and Earth observation. The maps cover 31 plant functional traits as defined in the TRY Plant Trait Database at 1 km resolution with global extent.
 
 Plant functional traits are predicted as community-weighted means based on a synthesis of crowdsourced biodiversity data (GBIF species observations, sPlot vegetation surveys, and in situ trait measurements from the TRY trait database) modeled as a function of Earth observation data, including surface reflectance, climatic variables, soil properties, canopy height, and vegetation optical depth.
